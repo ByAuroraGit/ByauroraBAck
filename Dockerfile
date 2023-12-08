@@ -1,14 +1,18 @@
-# Use a imagem do OpenJDK 11 como base
-FROM adoptopenjdk:11-jre-hotspot
-
-# Define o diretório de trabalho no contêiner
+FROM maven:3.8.4-openjdk-17-slim as build
 WORKDIR /app
+ADD src src
+ADD pom.xml .
 
-# Copia o arquivo JAR do Quarkus para o diretório de trabalho no contêiner
-COPY target/delivery.jar /app/
+RUN mvn package -DskipTests=true
 
-# Expõe a porta 8080 (ou a porta que seu aplicativo Quarkus está configurado para usar)
+FROM registry.access.redhat.com/ubi8/openjdk-17:1.14-9
+
+# We make four distinct layers so if there are application changes the library layers can be re-used
+COPY --from=build --chown=185 /app/target/quarkus-app/lib/ /deployments/lib/
+COPY --from=build --chown=185 /app/target/quarkus-app/*.jar /deployments/
+COPY --from=build --chown=185 /app/target/quarkus-app/app/ /deployments/app/
+COPY --from=build --chown=185 /app/target/quarkus-app/quarkus/ /deployments/quarkus/
+
 EXPOSE 8080
 
-# Comando de inicialização do aplicativo Quarkus
-CMD ["java", "-jar", "delivery.jar"]
+ENTRYPOINT [ "java", "-jar", "/deployments/quarkus-run.jar" ]
