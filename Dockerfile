@@ -13,6 +13,6 @@ COPY --from=build --chown=185 /app/target/quarkus-app/*.jar /deployments/
 COPY --from=build --chown=185 /app/target/quarkus-app/app/ /deployments/app/
 COPY --from=build --chown=185 /app/target/quarkus-app/quarkus/ /deployments/quarkus/
 
-EXPOSE 9123
+EXPOSE 17800
 
 ENTRYPOINT [ "java", "-jar", "/deployments/quarkus-run.jar" ]
